@@ -5,7 +5,7 @@ import redis.actors.RedisClientActor
 import java.net.InetSocketAddress
 import scala.concurrent.{Future, ExecutionContext}
 import redis.protocol.RedisReply
-import redis.commands.Transactions
+import redis.commands._
 
 
 case class RedisServer(host: String = "localhost",
@@ -52,11 +52,12 @@ abstract class RedisClientPoolLike(system: ActorRefFactory) extends RoundRobinPo
 
 case class RedisClientPool(redisServers: Seq[RedisServer],
                            name: String = "RedisClientPool")
-                          (implicit _system: ActorRefFactory) extends RedisClientPoolLike(_system) with RedisCommands
+                          (implicit _system: ActorRefFactory) extends RedisClientPoolLike(_system) with RedisCommands  with PipelinePool
 
 case class RedisClientMasterSlaves(master: RedisServer,
                                    slaves: Seq[RedisServer])
-                                  (implicit _system: ActorRefFactory) extends RedisCommands with Transactions {
+                                  (implicit _system: ActorRefFactory) extends RedisCommands with Transactions with PipelineMasterSlaves {
+
   implicit val executionContext = _system.dispatcher
 
   val masterClient = RedisClient(master.host, master.port, master.password, master.db)
